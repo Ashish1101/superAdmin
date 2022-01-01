@@ -4,6 +4,7 @@ const superAdminModel = databaseLayer.superAdminModel
 const repository = databaseLayer.repository
 import {HashPassword , comparePassword} from '../utils/passwordHash'
 import generateToken from '../utils/generateJwtToken'
+import { Channel } from 'amqplib'
 
 
 type AuthType = {
@@ -30,7 +31,7 @@ type DeleteSuperAdminType = {
     id : string
 }
 
-export const signUp = async (userInputs : AuthType) : Promise<ReturnType | undefined> => {
+export const signUp = async (userInputs : AuthType , channel : Channel) : Promise<ReturnType | undefined> => {
     const {email , password} = userInputs
     try {
         let superAdmin = await superAdminModel.findOne({email:email});
@@ -44,6 +45,9 @@ export const signUp = async (userInputs : AuthType) : Promise<ReturnType | undef
             role : 'superAdmin'
         })
          
+        //testing of queue
+        channel.sendToQueue('superAdminQueue' , Buffer.from(JSON.stringify(superAdmin)))
+
         //hash the password
         let hashedPass = await HashPassword(password)
         superAdmin.password = hashedPass
@@ -58,7 +62,7 @@ export const signUp = async (userInputs : AuthType) : Promise<ReturnType | undef
     }
 }
 
-export const signin = async (userInputs : AuthType) : Promise<ReturnType | undefined> => {
+export const signin = async (userInputs : AuthType , channel : Channel) : Promise<ReturnType | undefined> => {
    try {
        const {email , password} = userInputs;
 
@@ -77,10 +81,9 @@ export const signin = async (userInputs : AuthType) : Promise<ReturnType | undef
        if(!isPassMatched) {
            return {message : "Information Incorrect."}
        }
-
-       //jwt token
-    //    console.log(typeof superAdmin.id)
-    //    console.log(typeof superAdmin._id)
+       
+    //testing of queue
+    channel.sendToQueue('superAdminQueue' , Buffer.from(JSON.stringify(superAdmin)))
        const payload = {
            id : superAdmin._id,
            role : superAdmin.role as any

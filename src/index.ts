@@ -2,6 +2,8 @@ import dotenv from 'dotenv'
 import express ,  {Request , Response} from 'express'
 import databaseLayer from './database'
 import expressApp from './express-app'
+import Queue from './queue'
+
 dotenv.config()
 const app = express();
 

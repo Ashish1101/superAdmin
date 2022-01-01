@@ -1,14 +1,18 @@
 import {signUp , signin , updateSuperAdmin , deleteSuperAdmin} from '../services/superAdmin'
-import express, {Request , Response, Router} from 'express'
-const routes = express.Router();
+import express, {Request , Response, Router , Express} from 'express'
+
 import ValidationLayer from '../utils/ValidationLayer'
 import verifyToken from '../utils/verifyJwtToken'
+import { Channel } from 'amqplib'
 const validations = new ValidationLayer()
 
-routes.post('/signup' , [validations.signup], async (req : Request, res : Response) => {
+
+
+const superAdminRoutes = ( app : Express  , channel : Channel) => {
+    app.post('/signup' , [validations.signup], async (req : Request, res : Response) => {
         try {
             console.log('hello from serivce layer')
-            const serviceLayerResponse = await signUp(req.body)
+            const serviceLayerResponse = await signUp(req.body , channel)
             console.log(serviceLayerResponse)
             return res.status(200).json(serviceLayerResponse);
         } catch (err) {
@@ -16,10 +20,10 @@ routes.post('/signup' , [validations.signup], async (req : Request, res : Respon
         }
 })
 
-routes.post('/signin' , [validations.signup], async (req : Request, res : Response) => {
+app.post('/signin' , [validations.signup], async (req : Request, res : Response) => {
     try {
         console.log('hello from serivce layer')
-        const serviceLayerResponse = await signin(req.body)
+        const serviceLayerResponse = await signin(req.body , channel)
         console.log(serviceLayerResponse)
         return res.status(200).json(serviceLayerResponse);
     } catch (err) {
@@ -27,7 +31,7 @@ routes.post('/signin' , [validations.signup], async (req : Request, res : Respon
     }
 })
 
-routes.post('/updateSuperAdmin' , [verifyToken], async (req : Request, res : Response) => {
+app.post('/updateSuperAdmin' , [verifyToken], async (req : Request, res : Response) => {
     try {
         const user = (req as any).user
         const userInputs = {
@@ -42,7 +46,7 @@ routes.post('/updateSuperAdmin' , [verifyToken], async (req : Request, res : Res
     }
 })
 
-routes.delete('/deleteSuperAdmin' , [verifyToken] , async (req : Request , res : Response) => {
+app.delete('/deleteSuperAdmin' , [verifyToken] , async (req : Request , res : Response) => {
     try {
         const id = (req as any).user.id
         const serviceLayerResponse = await deleteSuperAdmin({id})
@@ -53,7 +57,12 @@ routes.delete('/deleteSuperAdmin' , [verifyToken] , async (req : Request , res :
     }
 })
 
-export default routes
+//app for adding a admin
+app.post('/admin/createAdmin' , [verifyToken] , async (req : Request , res : Response) => {
+    //from here we will send the req.body to the admin service and get the acknowledgement
+})
+}
 
+export default superAdminRoutes
 
 
