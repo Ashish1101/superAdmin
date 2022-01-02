@@ -20,6 +20,7 @@ export default async (app : Express) => {
         
         //insert a superAdminQueue first
         await channel.assertQueue('superAdminQueue')
+        await channel.assertQueue('createAdmin')
         ApiLayer.superAdminRoutes(app , channel)
         QueueConsumers(channel)
     })

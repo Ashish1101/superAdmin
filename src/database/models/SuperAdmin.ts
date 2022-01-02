@@ -1,10 +1,14 @@
 import {prop , getModelForClass} from '@typegoose/typegoose'
+import {Types} from 'mongoose'
 
 type AdminsType = {
     email?: string
     name?: string
     mobile?: number
+    institueName?: string
+    password?: string
 }
+
 
 class SuperAdmin {
     @prop({type : () => String})
@@ -25,8 +29,8 @@ class SuperAdmin {
     @prop({type: () => String , default : 'superAdmin'})
     public role?: string
 
-    @prop({type : () => [Object]}) 
-    public admins?: AdminsType[]
+    @prop({type: Object , default : []}) 
+    public admins?: Types.Array<AdminsType>
 }
 
 const superAdminModel = getModelForClass(SuperAdmin);

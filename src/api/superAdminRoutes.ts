@@ -1,4 +1,4 @@
-import {signUp , signin , updateSuperAdmin , deleteSuperAdmin} from '../services/superAdmin'
+import {signUp , signin , updateSuperAdmin , deleteSuperAdmin , createAdmin} from '../services/superAdmin'
 import express, {Request , Response, Router , Express} from 'express'
 
 import ValidationLayer from '../utils/ValidationLayer'
@@ -60,6 +60,15 @@ app.delete('/deleteSuperAdmin' , [verifyToken] , async (req : Request , res : Re
 //app for adding a admin
 app.post('/admin/createAdmin' , [verifyToken] , async (req : Request , res : Response) => {
     //from here we will send the req.body to the admin service and get the acknowledgement
+    try {
+    const id = (req as any).user.id
+    const {email , password , name , instituteName , mobileNumber} = req.body
+    const serviceLayerResponse = await createAdmin({email , password , name , instituteName , mobileNumber , id} , channel)
+    console.log(serviceLayerResponse);
+    return res.status(200).json(serviceLayerResponse)
+    } catch (err) {
+        console.log('error in response layere createAdmin' , err)
+    }
 })
 }
 

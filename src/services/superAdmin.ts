@@ -27,9 +27,19 @@ type SuperAdminType = {
     id : string
 }
 
+type AdminType = {
+    email : string
+    password : string
+    name?: string
+    mobileNumber: number
+    instituteName?: string
+    id : string //superAdmin id
+}
+
 type DeleteSuperAdminType = {
     id : string
 }
+
 
 export const signUp = async (userInputs : AuthType , channel : Channel) : Promise<ReturnType | undefined> => {
     const {email , password} = userInputs
@@ -141,4 +151,38 @@ export const deleteSuperAdmin = async (userInputs : DeleteSuperAdminType) : Prom
      } catch (err) {
          console.log('error in delete superAdmin' , err)
      }
+     
+}
+
+export const createAdmin = async (userInputs : AdminType, channel : Channel) : Promise<ReturnType | undefined> => {
+   try {
+       //we also have to store that admin details in superAdmin block
+       const {email , password , name , instituteName, mobileNumber , id} = userInputs
+       let superAdmin = await superAdminModel.findOne({_id : id});
+       if(!superAdmin) {
+           return {message : "No authorized to perform this action"}
+       }
+       //store data to superAdmin model
+       const dataToSend = {
+           email,
+           password,
+           name,
+           instituteName,
+           mobileNumber
+       }
+       const data = superAdmin.admins?.push(dataToSend)
+       console.log('data from service' , data)
+       await superAdmin.save();
+       //hash admin password before sending or hash in admin service
+       //we have to send this userInputs information to admin service to consume
+       const isSend = channel.sendToQueue('createAdmin' , Buffer.from(JSON.stringify(dataToSend)))
+       if(isSend) {
+           return {message : "Admin Created Successfully."}
+       }
+
+       return {message : "Something went's wrong..."}
+       
+   } catch (err) {
+       console.log('error from created Admin' , err)
+   }
 }
