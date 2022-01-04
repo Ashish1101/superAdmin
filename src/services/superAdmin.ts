@@ -2,6 +2,7 @@
 import databaseLayer from '../database'
 const superAdminModel = databaseLayer.superAdminModel
 const repository = databaseLayer.repository
+import {SUPER_ADMIN_EXCHANGE , CREATE_ADMIN_KEY} from '../queue/types'
 import {HashPassword , comparePassword} from '../utils/passwordHash'
 import generateToken from '../utils/generateJwtToken'
 import { Channel } from 'amqplib'
@@ -170,16 +171,22 @@ export const createAdmin = async (userInputs : AdminType, channel : Channel) : P
            instituteName,
            mobileNumber
        }
-       const data = superAdmin.admins?.push(dataToSend)
-       console.log('data from service' , data)
+       console.log('superadmin admins------------' , superAdmin)
+       superAdmin.admins?.push(dataToSend)
+
+       //here is a bug newAdmin information not adding in superAdmin database
+       console.log('superadmin admins' , superAdmin)
        await superAdmin.save();
        //hash admin password before sending or hash in admin service
        //we have to send this userInputs information to admin service to consume
-       const isSend = channel.sendToQueue('createAdmin' , Buffer.from(JSON.stringify(dataToSend)))
-       if(isSend) {
+       const wait = channel.publish(SUPER_ADMIN_EXCHANGE , CREATE_ADMIN_KEY, Buffer.from(JSON.stringify(dataToSend)))
+       if(wait) {
            return {message : "Admin Created Successfully."}
        }
-
+       //    const isSend = channel.sendToQueue('createAdmin' , Buffer.from(JSON.stringify(dataToSend)))
+       //    if(isSend) {
+       //        return {message : "Admin Created Successfully."}
+       //    }
        return {message : "Something went's wrong..."}
        
    } catch (err) {
