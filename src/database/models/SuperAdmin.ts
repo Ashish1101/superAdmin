@@ -29,8 +29,8 @@ class SuperAdmin {
     @prop({type: () => String , default : 'superAdmin'})
     public role?: string
 
-    @prop({type: Object , default : []}) 
-    public admins?: Types.Array<AdminsType>
+    @prop({type: () =>  [Object]}) 
+    public admins!: AdminsType[]
 }
 
 const superAdminModel = getModelForClass(SuperAdmin);
