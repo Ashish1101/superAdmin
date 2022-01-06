@@ -12,7 +12,7 @@ const app = express();
 const startServer = async () => {
    databaseLayer.mongoDbConnection();
    await expressApp(app)
-   app.listen(5000 , () => console.log('server is running'))
+   app.listen(5001 , () => console.log('server is running'))
 }
 
 startServer()

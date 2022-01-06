@@ -19,6 +19,20 @@ export default class ValidationLayer {
         if(error) {
             return res.status(400).json({message : error.details[0].message})
         }
-        next()
+        next();
+    }
+
+    signin(req : Request , res : Response , next : NextFunction) {
+        const userInputs : AuthType = (req as any).body
+        const {email , password } = userInputs
+        const check = joi.object({
+            email : joi.string().not().empty().email().required(),
+            password : joi.string().not().empty().min(8).max(16).required()
+        })
+        const {error} = check.validate({email , password});
+        if(error) {
+            return res.status(400).json({message : error.details[0].message});
+        }
+        next();
     }
 }

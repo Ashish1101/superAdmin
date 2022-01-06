@@ -38,13 +38,13 @@ export default async (app: Express) => {
 		//asset one exchange name SuperAdmin
 		await channel.assertExchange(SUPER_ADMIN_EXCHANGE, DIRECT_EXCHANGE_TYPE);
 
-        // await channel.assertQueue(CREATE_ADMIN_QUEUE)
+        await channel.assertQueue(CREATE_ADMIN_QUEUE)
 
-        // await channel.assertQueue(UPDATE_ADMIN_QUEUE)
+        await channel.assertQueue(UPDATE_ADMIN_QUEUE)
 
-        // await channel.assertQueue(ACTIVATE_ADMIN_QUEUE)
+        await channel.assertQueue(ACTIVATE_ADMIN_QUEUE)
 
-        // await channel.assertQueue(DEACTIVATE_ADMIN_QUEUE)
+        await channel.assertQueue(DEACTIVATE_ADMIN_QUEUE)
 
 
 		//bind some queues to this exchange
@@ -63,10 +63,6 @@ export default async (app: Express) => {
 			SUPER_ADMIN_EXCHANGE,
 			ACTIVATE_ADMIN_KEY
 		);
-
-		//insert a superAdminQueue first
-
-		//bind queue
 
 		ApiLayer.superAdminRoutes(app, channel);
 		QueueConsumers(channel);

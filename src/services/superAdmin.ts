@@ -2,7 +2,7 @@
 import databaseLayer from '../database'
 const superAdminModel = databaseLayer.superAdminModel
 const repository = databaseLayer.repository
-import {SUPER_ADMIN_EXCHANGE , CREATE_ADMIN_KEY} from '../queue/types'
+import {SUPER_ADMIN_EXCHANGE , CREATE_ADMIN_KEY, ACTIVATE_ADMIN_KEY, DEACTIVATE_ADMIN_KEY} from '../queue/types'
 import {HashPassword , comparePassword} from '../utils/passwordHash'
 import generateToken from '../utils/generateJwtToken'
 import { Channel } from 'amqplib'
@@ -41,6 +41,12 @@ type DeleteSuperAdminType = {
     id : string
 }
 
+type ActivateAdmin = {
+    email : string
+    isActive : boolean
+    id : string
+}
+
 
 export const signUp = async (userInputs : AuthType , channel : Channel) : Promise<ReturnType | undefined> => {
     const {email , password} = userInputs
@@ -73,7 +79,7 @@ export const signUp = async (userInputs : AuthType , channel : Channel) : Promis
     }
 }
 
-export const signin = async (userInputs : AuthType , channel : Channel) : Promise<ReturnType | undefined> => {
+export const signIn = async (userInputs : AuthType , channel : Channel) : Promise<ReturnType | undefined> => {
    try {
        const {email , password} = userInputs;
 
@@ -192,4 +198,50 @@ export const createAdmin = async (userInputs : AdminType, channel : Channel) : P
    } catch (err) {
        console.log('error from created Admin' , err)
    }
+}
+
+export const activateAdmin =  async (userInputs : ActivateAdmin , channel : Channel) : Promise<ReturnType | undefined> => {
+    try {
+        const {email , isActive , id} = userInputs;
+        let superAdmin = await superAdminModel.findOne({_id : id});
+        if(!superAdmin) {
+           return {message : "No authorized to perform this action"}
+        }
+
+        const dataToSend = {
+            email,
+            isActive
+        }
+
+        //send this message to admin service
+        const wait = channel.publish(SUPER_ADMIN_EXCHANGE , ACTIVATE_ADMIN_KEY , Buffer.from(JSON.stringify(dataToSend)))
+        if(wait) {
+            return {message : "Admin Activated."}
+        }
+    } catch (err) {
+        console.log('error from activate Admin' , err)
+    }
+}
+
+export const deActivateAdmin =  async (userInputs : ActivateAdmin , channel : Channel) : Promise<ReturnType | undefined>  => {
+    try {
+        const {email , isActive , id} = userInputs;
+        let superAdmin = await superAdminModel.findOne({_id : id});
+        if(!superAdmin) {
+           return {message : "No authorized to perform this action"}
+        }
+
+        const dataToSend = {
+            email,
+            isActive
+        }
+
+        //send this message to admin service
+        const wait = channel.publish(SUPER_ADMIN_EXCHANGE , DEACTIVATE_ADMIN_KEY , Buffer.from(JSON.stringify(dataToSend)))
+        if(wait) {
+            return {message : "Admin Deactivated."}
+        }
+    } catch (err) {
+        console.log('error from Deactivate Admin' , err)
+    }
 }
