@@ -3,6 +3,7 @@ import ApiLayer from "./api";
 import morgan from "morgan";
 import helmet from "helmet";
 import amqp from "amqplib";
+import formidableMiddleware from 'express-formidable'
 import QueueConsumers from "./queue";
 import {
 	FANOUT_EXCHANGE_TYPE,
@@ -22,8 +23,9 @@ import {
 
 export default async (app: Express) => {
 	app.use(express.json());
+	// app.use(formidableMiddleware())
 	app.use(express.urlencoded({ extended: false }));
-
+   
 	app.use(helmet());
 	app.use(
 		morgan(":method :url :status :res[content-length] - :response-time ms")
