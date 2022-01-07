@@ -1,9 +1,10 @@
-import {signUp , signIn , updateSuperAdmin , deleteSuperAdmin , createAdmin, activateAdmin , deActivateAdmin} from '../services/superAdmin'
+import {signUp , signIn , updateSuperAdmin , deleteSuperAdmin , createAdmin, activateAdmin , deActivateAdmin , bulkStudentUpload} from '../services/superAdmin'
 import express, {Request , Response, Router , Express, NextFunction} from 'express'
 
 import ValidationLayer from '../utils/ValidationLayer'
 import verifyToken from '../utils/verifyJwtToken'
 import { Channel } from 'amqplib'
+import upload from '../utils/fileUpload'
 import formidable from 'formidable'
 
 const validations = new ValidationLayer()
@@ -106,9 +107,21 @@ app.post('/deActivateAdmin' , [verifyToken , validations.deActivateAdmin] , asyn
 
 //will do work on it
 //getting error in uploading file
-app.post('/uploadBulkStudent' , [verifyToken] ,  async ( req : Request , res : Response , next: NextFunction) => {
+app.post('/uploadBulkStudent' , [verifyToken , upload.single('uploadFile')] ,  async ( req : Request , res : Response , next: NextFunction)  => {
     try {
-        console.log(req.file)
+        if(req.file === undefined || req.file === null) {
+            return res.status(301).json({message: "File type not supported"})
+        }
+
+        //here we will get admin email to send student data
+
+        //we have to write a cron job to delete the file at the end of the day
+        const {email} = req.body
+        const file = req.file
+        console.log('req file ', req.file , email)
+        const serviceLayerResponse = await bulkStudentUpload({email , file}, channel)
+        console.log('serivce layer')
+        return res.status(200).json(serviceLayerResponse)
     } catch (err) {
         console.log('error from uploadBulkStudent' , err)
     }
