@@ -2,11 +2,13 @@
 import databaseLayer from '../database'
 const superAdminModel = databaseLayer.superAdminModel
 const repository = databaseLayer.repository
-import {SUPER_ADMIN_EXCHANGE , CREATE_ADMIN_KEY, ACTIVATE_ADMIN_KEY, DEACTIVATE_ADMIN_KEY} from '../queue/types'
+import xlsx from 'node-xlsx'
+import {SUPER_ADMIN_EXCHANGE , CREATE_ADMIN_KEY, ACTIVATE_ADMIN_KEY, DEACTIVATE_ADMIN_KEY , STUDENT_BULK_UPLOAD} from '../queue/types'
 import {HashPassword , comparePassword} from '../utils/passwordHash'
 import generateToken from '../utils/generateJwtToken'
 import { Channel } from 'amqplib'
-
+import fs from 'fs'
+import path from 'path'
 
 type AuthType = {
     email: string
@@ -243,5 +245,28 @@ export const deActivateAdmin =  async (userInputs : ActivateAdmin , channel : Ch
         }
     } catch (err) {
         console.log('error from Deactivate Admin' , err)
+    }
+}
+
+export const bulkStudentUpload = async (userInputs : any , channel : Channel) : Promise<ReturnType | undefined > => {
+    try {
+        const {file , email} = userInputs;
+        const filePath = `${process.env.BASE_DIR}/upload/${file.filename}`
+        const workSheetFromFile = xlsx.parse(fs.readFileSync(filePath))
+        console.log('workbooksheet' , workSheetFromFile)
+        const dataToSend = {
+           data : workSheetFromFile[0].data,
+           email : email
+        }
+        //SEND THIS DATA TO FANOUT EXCHANGE
+        const wait = channel.publish(STUDENT_BULK_UPLOAD , '' , Buffer.from(JSON.stringify(dataToSend)))
+        //we will extract the data from the file and store that data in 
+        if(wait) {
+            return { message : "File uploaded",} 
+        }
+        //json format and send that data to two queue 
+        //one for admin and one for student
+    } catch (err) {
+        console.log('error from student bulk upload' , err)
     }
 }

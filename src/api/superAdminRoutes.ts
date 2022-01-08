@@ -1,11 +1,13 @@
-import {signUp , signIn , updateSuperAdmin , deleteSuperAdmin , createAdmin, activateAdmin , deActivateAdmin} from '../services/superAdmin'
-import express, {Request , Response, Router , Express} from 'express'
+import {signUp , signIn , updateSuperAdmin , deleteSuperAdmin , createAdmin, activateAdmin , deActivateAdmin , bulkStudentUpload} from '../services/superAdmin'
+import express, {Request , Response, Router , Express, NextFunction} from 'express'
 
 import ValidationLayer from '../utils/ValidationLayer'
 import verifyToken from '../utils/verifyJwtToken'
 import { Channel } from 'amqplib'
-const validations = new ValidationLayer()
+import upload from '../utils/fileUpload'
+import formidable from 'formidable'
 
+const validations = new ValidationLayer()
 
 //ROUTE FOR SIGNUP ANDADMIN
 const superAdminRoutes = ( app : Express  , channel : Channel) => {
@@ -49,7 +51,7 @@ app.post('/updateSuperAdmin' , [verifyToken], async (req : Request, res : Respon
 })
 
 //ROUTE FOR DELETING AN SUPERADMIN
-app.delete('/deleteSuperAdmin' , [verifyToken] , async (req : Request , res : Response) => {
+app.delete('/deleteSuperAdmin' , [verifyToken , validations.deleteSuperAdmin] , async (req : Request , res : Response) => {
     try {
         const id = (req as any).user.id
         const serviceLayerResponse = await deleteSuperAdmin({id})
@@ -61,7 +63,7 @@ app.delete('/deleteSuperAdmin' , [verifyToken] , async (req : Request , res : Re
 })
 
 //ROUTE FOR CREATING AN ADMIN
-app.post('/createAdmin' , [verifyToken] , async (req : Request , res : Response) => {
+app.post('/createAdmin' , [verifyToken , validations.createAdmin] , async (req : Request , res : Response) => {
     //from here we will send the req.body to the admin service and get the acknowledgement
     try {
     const id = (req as any).user.id
@@ -75,7 +77,7 @@ app.post('/createAdmin' , [verifyToken] , async (req : Request , res : Response)
 })
 
 //ROUTE FOR ACTIVATING AN ADMIN
-app.post('/activateAdmin' , [verifyToken] , async (req : Request , res : Response) => {
+app.post('/activateAdmin' , [verifyToken , validations.activateAdmin] , async (req : Request , res : Response) => {
     //from here we will send the req.body to the admin service and get the acknowledgement
     try {
     const id = (req as any).user.id
@@ -89,7 +91,7 @@ app.post('/activateAdmin' , [verifyToken] , async (req : Request , res : Respons
 })
 
 //ROUTE FOR DEACTIVATING AN ADMIN
-app.post('/deActivateAdmin' , [verifyToken] , async (req : Request , res : Response) => {
+app.post('/deActivateAdmin' , [verifyToken , validations.deActivateAdmin] , async (req : Request , res : Response) => {
     //from here we will send the req.body to the admin service and get the acknowledgement
     try {
     const id = (req as any).user.id
@@ -99,6 +101,29 @@ app.post('/deActivateAdmin' , [verifyToken] , async (req : Request , res : Respo
     return res.status(200).json(serviceLayerResponse)
     } catch (err) {
         console.log('error in response layere createAdmin' , err)
+    }
+})
+
+
+//will do work on it
+//getting error in uploading file
+app.post('/uploadBulkStudent' , [verifyToken , upload.single('uploadFile')] ,  async ( req : Request , res : Response , next: NextFunction)  => {
+    try {
+        if(req.file === undefined || req.file === null) {
+            return res.status(301).json({message: "File type not supported"})
+        }
+
+        //here we will get admin email to send student data
+
+        //we have to write a cron job to delete the file at the end of the day
+        const {email} = req.body
+        const file = req.file
+        console.log('req file ', req.file , email)
+        const serviceLayerResponse = await bulkStudentUpload({email , file}, channel)
+        console.log('serivce layer')
+        return res.status(200).json(serviceLayerResponse)
+    } catch (err) {
+        console.log('error from uploadBulkStudent' , err)
     }
 })
 }
