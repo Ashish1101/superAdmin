@@ -10,6 +10,19 @@ import { Channel } from 'amqplib'
 import fs from 'fs'
 import path from 'path'
 
+type StudentType = {
+  name : string
+  email : string
+  mobileNumber: number
+  address : string
+  joinDate : Date
+  fees : number
+  instituteName : string
+  dob : Date
+  parentNumber : number
+  password : string
+}
+
 type AuthType = {
     email: string
     password: string,
@@ -63,10 +76,6 @@ export const signUp = async (userInputs : AuthType , channel : Channel) : Promis
             password: password,
             role : 'superAdmin'
         })
-         
-        //testing of queue
-        channel.sendToQueue('superAdminQueue' , Buffer.from(JSON.stringify(superAdmin)))
-
         //hash the password
         let hashedPass = await HashPassword(password)
         superAdmin.password = hashedPass
@@ -101,8 +110,6 @@ export const signIn = async (userInputs : AuthType , channel : Channel) : Promis
            return {message : "Information Incorrect."}
        }
        
-    //testing of queue
-    channel.sendToQueue('superAdminQueue' , Buffer.from(JSON.stringify(superAdmin)))
        const payload = {
            id : superAdmin._id,
            role : superAdmin.role as any
@@ -252,17 +259,42 @@ export const bulkStudentUpload = async (userInputs : any , channel : Channel) : 
     try {
         const {file , email} = userInputs;
         const filePath = `${process.env.BASE_DIR}/upload/${file.filename}`
-        const workSheetFromFile = xlsx.parse(fs.readFileSync(filePath))
+        const workSheetFromFile = xlsx.parse(fs.readFileSync(filePath) , {blankrows: false})
         console.log('workbooksheet' , workSheetFromFile)
+
+        //will send the tailored data to queue
+        const res : StudentType[] = []
+        let data = workSheetFromFile[0].data
+        console.log('myDATa--------------------', data)
+
+        data.shift()
+        console.log('myDATa--------------------', data)
+        data.forEach( async (item : any)=> {
+            let convertToObj  = {
+               name : item[0],
+               email : item[1],
+               mobileNumber: item[2],
+               address: item[3],
+               joinDate : new Date(1899 , 12 , item[4]),
+               fees : item[5],
+               instituteName: item[6],
+               dob: new Date(1899 , 12 , item[7]),
+               parentNumber : item[8],
+               password: item[9]
+            }
+            res.push(convertToObj)
+         })
         const dataToSend = {
-           data : workSheetFromFile[0].data,
+           data : res,
            email : email
         }
+
+
         //SEND THIS DATA TO FANOUT EXCHANGE
         const wait = channel.publish(STUDENT_BULK_UPLOAD , '' , Buffer.from(JSON.stringify(dataToSend)))
         //we will extract the data from the file and store that data in 
         if(wait) {
-            return { message : "File uploaded",} 
+            return { message : "File uploaded", data : dataToSend.data} 
         }
         //json format and send that data to two queue 
         //one for admin and one for student

@@ -21,8 +21,7 @@ type ActivateAdminType = {
 
 export default class ValidationLayer {
     signup(req : Request, res : Response, next : NextFunction) {
-        const userInputs : AuthType = req.body
-        const {email , password} = userInputs
+        const {email , password} : AuthType = req.body
         const check = joi.object({
             email : joi.string().not().empty().email().required(),
             password: joi.string().not().empty().min(8).max(16).required()

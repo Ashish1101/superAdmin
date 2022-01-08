@@ -25,18 +25,16 @@ import {
 //in here we will setup the rabbitMQ
 
 export default async (app: Express) => {
-	app.use(express.json({limit:'50mb'}));
-	app.use(express.urlencoded({ extended: false }));
-   
-	app.use(helmet());
-	app.use(
-		morgan(":method :url :status :res[content-length] - :response-time ms")
-	);
-
-	//use routes
-	amqp.connect("amqp://localhost:5672").then(async (conn) => {
-		const channel = await conn.createChannel();
-
+	
+		app.use(helmet());
+		app.use(morgan(":method :url :status :res[content-length] - :response-time ms"));
+		app.use(express.json({limit:'50mb'}));
+		app.use(express.urlencoded({ extended: false }));
+		
+		//use routes
+		amqp.connect("amqp://localhost:5672").then(async (conn) => {
+			const channel = await conn.createChannel();
+			
 		//testing of exchange
 
 		//asset one exchange name SuperAdmin
