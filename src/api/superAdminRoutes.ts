@@ -23,7 +23,7 @@ const superAdminRoutes = ( app : Express  , channel : Channel) => {
 })
 
 //ROUTE FOR SIGNIN AN ADMIN
-app.post('/signin' , [validations.signin], async (req : Request, res : Response) => {
+app.post('/signin' , [validations.signin] , async (req : Request, res : Response) => {
     try {
         console.log('hello from serivce layer')
         const serviceLayerResponse = await signIn(req.body , channel)
