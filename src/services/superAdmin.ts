@@ -20,7 +20,7 @@ type StudentType = {
   instituteName : string
   dob : Date
   parentNumber : number
-  password : string
+  password : Promise<string>
   instituteId: string
 }
 
@@ -270,6 +270,10 @@ export const bulkStudentUpload = async (userInputs : any , channel : Channel) : 
 
         data.shift()
         console.log('myDATa--------------------', data)
+
+        //TODO we have to check the file format by the xls sheet first row if the format is incorrect
+        //then throw an error
+
         data.forEach( async (item : any)=> {
             let convertToObj  = {
                name : item[0],
@@ -281,7 +285,7 @@ export const bulkStudentUpload = async (userInputs : any , channel : Channel) : 
                instituteName: item[6],
                dob: new Date(1899 , 12 , item[7]),
                parentNumber : item[8],
-               password: item[9],
+               password: HashPassword(item[9]),
                instituteId: email
             }
             res.push(convertToObj)
