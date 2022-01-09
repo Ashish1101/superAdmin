@@ -267,7 +267,10 @@ export const bulkStudentUpload = async (userInputs : any , channel : Channel) : 
         const res : StudentType[] = []
         let data = workSheetFromFile[0].data
         console.log('myDATa--------------------', data)
+        
 
+        //shift used because to delete first row that is just for columns name
+        //will use that for validating file
         data.shift()
         console.log('myDATa--------------------', data)
 
