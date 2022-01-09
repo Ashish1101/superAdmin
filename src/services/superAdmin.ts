@@ -21,6 +21,7 @@ type StudentType = {
   dob : Date
   parentNumber : number
   password : string
+  instituteId: string
 }
 
 type AuthType = {
@@ -280,7 +281,8 @@ export const bulkStudentUpload = async (userInputs : any , channel : Channel) : 
                instituteName: item[6],
                dob: new Date(1899 , 12 , item[7]),
                parentNumber : item[8],
-               password: item[9]
+               password: item[9],
+               instituteId: email
             }
             res.push(convertToObj)
          })
